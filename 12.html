@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#FFD700">
+    <title>Zama Points Collector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #FFD700;
+            font-family: 'Poppins', sans-serif;
+            color: #FFF;
+            overflow: hidden;
+            height: 100vh;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 70%, #228B22 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            touch-action: none;
+        }
+        .header {
+            position: relative;
+            width: 100%;
+            padding: 20px;
+            background: rgba(255,215,0,0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            z-index: 20;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .header img {
+            height: 45px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5em, 5vw, 2.2em);
+            color: #000;
+            text-shadow: 2px 2px 5px rgba(255,255,255,0.6);
+        }
+        .score-ui {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2.5em, 10vw, 4em);
+            color: #FFD700;
+            font-weight: 800;
+            text-shadow: 0 0 20px #FF8C00, 4px 4px 15px rgba(0,0,0,0.8);
+            z-index: 10;
+            background: rgba(0,0,0,0.4);
+            padding: 15px 40px;
+            border-radius: 60px;
+            border: 4px solid #FFD700;
+            backdrop-filter: blur(10px);
+        }
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,215,0,0.9);
+            z-index: 30;
+            padding: 20px;
+        }
+        .start-screen h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2em, 8vw, 3.5em);
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 8px rgba(0,0,0,0.5);
+        }
+        .start-screen p {
+            font-size: clamp(1.1em, 4vw, 1.5em);
+            text-align: center;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 90%;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+        }
+        .start-btn {
+            background: linear-gradient(135deg, #FF4500, #FF8C00);
+            color: white;
+            border: none;
+            padding: 20px 70px;
+            font-size: clamp(1.4em, 5vw, 2em);
+            font-weight: 700;
+            border-radius: 70px;
+            cursor: pointer;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+        }
+        .start-btn:active { transform: scale(0.95); }
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(30,30,30,0.95));
+            padding: 50px 40px;
+            border-radius: 35px;
+            text-align: center;
+            display: none;
+            color: white;
+            max-width: 90vw;
+            z-index: 100;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+            backdrop-filter: blur(15px);
+            border: 3px solid #FFD700;
+        }
+        .creator-credit {
+            position: absolute;
+            bottom: 20px;
+            font-size: clamp(0.9em, 3vw, 1.1em);
+            opacity: 0.9;
+            text-shadow: 1px 1px 3px #000;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="header">
+            <img src="https://zama.ai/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.0f5a0a3b.png&w=256&q=75" alt="Zama Logo">
+            <h1>Zama Points Collector</h1>
+        </div>
+
+        <div class="start-screen" id="startScreen">
+            <h2>Zama Points Collector</h2>
+            <p>Swipe or drag left/right to collect <strong>EVERY</strong> falling Zama Point<br>
+            Miss even ONE = GAME OVER!<br>
+            Speed increases over time — how high can you score? 💛</p>
+            <button class="start-btn" onclick="startGame()">PLAY NOW</button>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="gameOver" class="game-over">
+            <h2 style="font-size:2.5em; margin-bottom:20px;">💥 GAME OVER 💥</h2>
+            <p style="font-size:2em; margin:20px 0;">Points Collected: <strong><span id="scoreDisplay">0</span></strong></p>
+            <p style="font-size:1.1em; line-height:1.6; margin:30px 0;">
+                Zama Public Sale: Jan 12-15, 2026<br>
+                Sealed-bid Dutch Auction • 10% Supply<br>
+                Token Claim: Jan 20, 2026<br>
+                Pre-register: <a href="https://auction.zama.org" style="color:#FFD700;">auction.zama.org</a><br><br>
+                Follow <a href="https://x.com/zama" style="color:#FFD700;">@zama</a> for latest updates!
+            </p>
+            <button class="start-btn" onclick="restartGame()">PLAY AGAIN</button>
+            <button class="start-btn" style="background:linear-gradient(135deg, #1DA1F2, #0D8BD9); margin-top:15px;" onclick="shareScore()">TWEET SCORE</button>
+        </div>
+
+        <p class="creator-credit">Created by @MNMAHFUZ01</p>
+    </div>
+
+    <div id="scoreUI" class="score-ui" style="display:none;">0</div>
+
+    <!-- Sounds -->
+    <audio id="collectSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="gameOverSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="backgroundMusic" loop preload="auto">
+        <source src="https://assets.mixkit.co/music/preview/mixkit-hip-hop-02-214.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreUI = document.getElementById('scoreUI');
+        const startScreen = document.getElementById('startScreen');
+        const collectSound = document.getElementById('collectSound');
+        const gameOverSound = document.getElementById('gameOverSound');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        
+        // Fullscreen canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', resizeCanvas);
+        resizeCanvas();
+
+        let gameRunning = false;
+        let score = 0;
+        let tokens = [];
+        let frame = 0;
+        let tokenSpeed = 3;
+        let spawnInterval = 100;
+        let playerX = 0;
+        let playerTargetX = 0;
+        const playerWidth = 0.2;
+        const playerHeight = 0.16;
+        let isDragging = false;
+
+        function unlockAudio() {
+            backgroundMusic.play().catch(() => {});
+            collectSound.play().then(() => collectSound.pause()).catch(() => {});
+            gameOverSound.play().then(() => gameOverSound.pause()).catch(() => {});
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('click', unlockAudio);
+        }
+        document.addEventListener('touchstart', unlockAudio, { once: true });
+        document.addEventListener('click', unlockAudio, { once: true });
+
+        function handleInput(clientX) {
+            playerTargetX = clientX - canvas.getBoundingClientRect().left;
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            handleInput(e.touches[0].clientX);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDragging) handleInput(e.touches[0].clientX);
+        });
+        canvas.addEventListener('touchend', () => isDragging = false);
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            handleInput(e.clientX);
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) handleInput(e.clientX);
+        });
+        canvas.addEventListener('mouseup', () => isDragging = false);
+
+        function updatePlayer() {
+            playerX += (playerTargetX - playerX) * 0.3;
+            playerX = Math.max(0, Math.min(canvas.width * (1 - playerWidth), playerX));
+        }
+
+        class ZamaPoint {
+            constructor() {
+                this.x = Math.random() * (canvas.width - 60) + 30;
+                this.y = -60;
+                this.vy = tokenSpeed;
+                this.size = canvas.width * 0.12;
+                this.collected = false;
+            }
+            update() {
+                this.y += this.vy;
+            }
+            draw() {
+                ctx.fillStyle = '#FFD700';
+                ctx.shadowColor = '#FF8C00';
+                ctx.shadowBlur = 25;
+                ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#000';
+                ctx.font = `bold ${this.size * 0.75}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Z', this.x, this.y);
+            }
+        }
+
+        function spawnPoint() {
+            tokens.push(new ZamaPoint());
+        }
+
+        function updatePoints() {
+            for (let i = tokens.length - 1; i >= 0; i--) {
+                const point = tokens[i];
+                point.update();
+
+                if (point.y > canvas.height && !point.collected) {
+                    gameOverSound.currentTime = 0;
+                    gameOverSound.play().catch(() => {});
+                    gameOver();
+                    return;
+                }
+
+                const pW = canvas.width * playerWidth;
+                const pH = canvas.height * playerHeight;
+                const pY = canvas.height - pH;
+                const pCenterX = playerX + pW / 2;
+                const dx = point.x - pCenterX;
+                const dy = point.y - (pY + pH / 2);
+                if (Math.hypot(dx, dy) < point.size / 2 + pH / 2) {
+                    point.collected = true;
+                    score++;
+                    scoreUI.textContent = score;
+                    collectSound.currentTime = 0;
+                    collectSound.play().catch(() => {});
+                    tokens.splice(i, 1);
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const pW = canvas.width * playerWidth;
+            const pH = canvas.height * playerHeight;
+            const pY = canvas.height - pH;
+
+            const basketSize = Math.min(pW * 1.3, pH * 1.2);
+            ctx.font = `${basketSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 15;
+            ctx.fillText('🧺', playerX + pW / 2, pY + pH / 2);
+            ctx.shadowBlur = 0;
+
+            tokens.forEach(point => point.draw());
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            frame++;
+            updatePlayer();
+            if (frame % spawnInterval === 0) spawnPoint();
+            updatePoints();
+            tokenSpeed += 0.0008;
+            spawnInterval = Math.max(20, spawnInterval * 0.996);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            canvas.style.display = 'block';
+            scoreUI.style.display = 'block';
+            gameRunning = true;
+            score = 0;
+            scoreUI.textContent = '0';
+            frame = 0;
+            tokenSpeed = 3;
+            spawnInterval = 100;
+            tokens = [];
+            playerX = canvas.width / 2 - canvas.width * playerWidth / 2;
+            playerTargetX = playerX;
+            backgroundMusic.play().catch(() => {});
+            spawnPoint();
+            gameLoop();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            backgroundMusic.pause();
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            startGame();
+        }
+
+        function shareScore() {
+            const text = `Just collected ${score} Zama Points with NO MISS! 🧺🔥\n\nPlay Zama Points Collector: ${window.location.href}\n\nPublic Sale Jan 12-15, 2026 • Pre-register: auction.zama.org\nFollow @zama!\n\nCreated by @MNMAHFUZ01 💪\n\n#ZamaCreatorProgram #Zama #FHE`;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
